@@ -1,1 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur facture Sonelgaz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E7;
+    --paper-2:#EFE8D8;
+    --ink:#1E2A3A;
+    --ink-soft:#5B6B7A;
+    --line:#D9D0BA;
+    --elec:#2E6F9E;
+    --elec-soft:#DCE9F1;
+    --gaz:#C97A2E;
+    --gaz-soft:#F3E3D1;
+    --total:#2F6E4F;
+    --total-soft:#DDEBE2;
+    --stamp:#2E6F9E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(30,42,58,0.06) 1px, transparent 0);
+    background-size: 22px 22px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:32px 16px 80px;
+  }
+  body.lang-ar{
+    font-family:'Cairo',sans-serif;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{margin-bottom:28px;}
+  .eyebrow-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-bottom:6px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  body.lang-ar .eyebrow{letter-spacing:0;text-transform:none;font-family:'Cairo',sans-serif;font-weight:600;}
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--elec);flex:none;}
+
+  .lang-switch{
+    display:flex;gap:4px;flex:none;
+    border:1px solid var(--line);border-radius:8px;padding:3px;background:#FFFDF8;
+  }
+  .lang-switch button{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    padding:5px 10px;
+    border:none;
+    border-radius:5px;
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .lang-switch button.active{
+    background:var(--elec);
+    color:#fff;
+  }
+
+  h1{
+    font-family:'Zilla Slab',serif;
+    font-weight:700;
+    font-size:32px;
+    margin:6px 0 6px;
+    letter-spacing:-0.01em;
+  }
+  body.lang-ar h1{font-family:'Cairo',sans-serif;letter-spacing:0;}
+  header p{color:var(--ink-soft);margin:0;font-size:14.5px;line-height:1.5;max-width:56ch;}
+
+  .card{
+    background:#FFFDF8;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px;
+    margin-bottom:18px;
+    box-shadow: 0 1px 0 rgba(30,42,58,0.03);
+  }
+
+  .meters{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:560px){.meters{grid-template-columns:1fr;}}
+
+  .meter{
+    border-radius:10px;
+    padding:18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .meter.elec{background:var(--elec-soft);}
+  .meter.gaz{background:var(--gaz-soft);}
+  .meter-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    font-weight:600;
+    display:flex;align-items:center;gap:6px;
+    margin-bottom:10px;
+  }
+  body.lang-ar .meter-label{font-family:'Cairo',sans-serif;letter-spacing:0;text-transform:none;font-size:13px;}
+  .meter.elec .meter-label{color:var(--elec);}
+  .meter.gaz .meter-label{color:var(--gaz);}
+  .meter-icon{width:16px;height:16px;flex:none;}
+
+  .input-row{display:flex;align-items:baseline;gap:8px;}
+  .input-row input{
+    flex:1;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:28px;
+    font-weight:600;
+    background:transparent;
+    border:none;
+    border-bottom:2px solid rgba(30,42,58,0.18);
+    padding:2px 0 6px;
+    color:var(--ink);
+    width:100%;
+    outline:none;
+  }
+  input[type="number"]{direction:ltr;}
+  .meter.elec input:focus{border-color:var(--elec);}
+  .meter.gaz input:focus{border-color:var(--gaz);}
+  .unit{font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--ink-soft);}
+  .meter-sub{font-size:12px;color:var(--ink-soft);margin-top:8px;}
+
+  details.advanced{margin-top:4px;}
+  details.advanced summary{
+    cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    padding:4px 0;
+    list-style:none;
+  }
+  body.lang-ar details.advanced summary{font-family:'Cairo',sans-serif;letter-spacing:0;text-transform:none;}
+  details.advanced summary::-webkit-details-marker{display:none;}
+  details.advanced summary:before{content:"▸ ";}
+  details.advanced[open] summary:before{content:"▾ ";}
+  .adv-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+  @media (max-width:560px){.adv-grid{grid-template-columns:1fr;}}
+  .adv-field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;}
+  .adv-field input{
+    width:100%;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    padding:7px 8px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:#fff;
+  }
+  .adv-field.checkbox{display:flex;align-items:center;gap:8px;margin-top:4px;}
+  .adv-field.checkbox input{width:auto;}
+  .adv-field.checkbox label{margin:0;font-size:13px;color:var(--ink);}
+
+  /* Receipt breakdown */
+  .receipt-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  body.lang-ar .receipt-title{font-family:'Cairo',sans-serif;letter-spacing:0;text-transform:none;font-weight:600;}
+  .receipt-title::after{content:"";flex:1;border-bottom:1px dashed var(--line);}
+
+  .tranche-block{margin-bottom:16px;}
+  .tranche-block h3{
+    font-family:'Zilla Slab',serif;
+    font-size:16px;
+    margin:0 0 8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  body.lang-ar .tranche-block h3{font-family:'Cairo',sans-serif;}
+  .tranche-block h3 .swatch{width:10px;height:10px;border-radius:3px;flex:none;}
+  .tranche-block.elec h3 .swatch{background:var(--elec);}
+  .tranche-block.gaz h3 .swatch{background:var(--gaz);}
+
+  table.tranches{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.tranches td{padding:5px 4px;border-bottom:1px dotted var(--line);}
+  table.tranches td.num{font-family:'IBM Plex Mono',monospace;text-align:right;white-space:nowrap;direction:ltr;}
+  table.tranches tr.empty td{color:#B9AF97;font-style:italic;}
+  table.tranches tr.subtotal td{font-weight:600;border-bottom:none;padding-top:8px;}
+
+  .line-item{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:7px 0;border-bottom:1px dotted var(--line);font-size:14px;
+  }
+  .line-item .val{font-family:'IBM Plex Mono',monospace;font-weight:500;direction:ltr;text-align:right;}
+  .line-item.strong{font-weight:600;font-size:15px;border-bottom:1px solid var(--line);padding-top:10px;}
+
+  .stamp-wrap{
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    padding:30px 20px 10px;
+  }
+  .stamp{
+    width:172px;height:172px;border-radius:50%;
+    border:3px solid var(--stamp);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    position:relative;
+    transform:rotate(-6deg);
+    background:radial-gradient(circle, rgba(46,111,158,0.05), transparent 70%);
+  }
+  body.lang-ar .stamp{transform:rotate(6deg);}
+  .stamp::before{
+    content:"";position:absolute;inset:8px;border:1px dashed var(--stamp);border-radius:50%;
+    opacity:0.5;
+  }
+  .stamp .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--stamp);
+    margin-bottom:2px;
+  }
+  body.lang-ar .stamp .sub{font-family:'Cairo',sans-serif;letter-spacing:0;text-transform:none;font-weight:600;}
+  .stamp .amount{
+    font-family:'Zilla Slab',serif;font-weight:700;font-size:26px;color:var(--ink);
+    line-height:1.1;text-align:center;direction:ltr;
+  }
+  .stamp .cur{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-top:2px;}
+  body.lang-ar .stamp .cur{font-family:'Cairo',sans-serif;}
+
+  .letters{
+    text-align:center;font-size:12.5px;color:var(--ink-soft);font-style:italic;
+    max-width:44ch;margin:12px auto 0;
+  }
+  body.lang-ar .letters{font-style:normal;}
+
+  footer{
+    text-align:center;font-size:11.5px;color:var(--ink-soft);margin-top:26px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  body.lang-ar footer{font-family:'Cairo',sans-serif;}
+  footer a{color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow-row">
+      <div class="eyebrow"><span class="dot"></span><span data-i18n="eyebrow">Barème CREG en vigueur — tarif 54M / 23M</span></div>
+      <div class="lang-switch">
+        <button type="button" data-lang="fr" class="active">FR</button>
+        <button type="button" data-lang="ar">عربي</button>
+      </div>
+    </div>
+    <h1 data-i18n="title">Simulateur de facture Sonelgaz</h1>
+    <p data-i18n="description">Entrez votre consommation trimestrielle d'électricité (kWh) et de gaz (Th). L'appli répartit automatiquement les quantités dans les 4 tranches réglementaires et calcule le montant net à payer, comme sur votre facture.</p>
+  </header>
+
+  <div class="card">
+    <div class="meters">
+      <div class="meter elec">
+        <div class="meter-label">
+          <svg class="meter-icon" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="#2E6F9E"/></svg>
+          <span data-i18n="elecLabel">Électricité</span>
+        </div>
+        <div class="input-row">
+          <input type="number" id="elecInput" min="0" step="1" placeholder="0" inputmode="decimal">
+          <span class="unit">kWh</span>
+        </div>
+        <div class="meter-sub" data-i18n="elecSub">Consommation du trimestre (index nouveau − index ancien)</div>
+      </div>
+
+      <div class="meter gaz">
+        <div class="meter-label">
+          <svg class="meter-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2c1.5 3 4 4.5 4 8a4 4 0 1 1-8 0c0-1 .3-1.8.7-2.5.3 1 1 1.5 1.3 1.2-.4-2 .4-4.7 2-6.7z" fill="#C97A2E"/></svg>
+          <span data-i18n="gazLabel">Gaz naturel</span>
+        </div>
+        <div class="input-row">
+          <input type="number" id="gazInput" min="0" step="1" placeholder="0" inputmode="decimal">
+          <span class="unit">Th</span>
+        </div>
+        <div class="meter-sub" data-i18n="gazSub">Consommation en thermies, convertie via le coefficient PCS</div>
+      </div>
+    </div>
+
+    <details class="advanced">
+      <summary data-i18n="advancedSummary">Réglages avancés (redevances et taxes fixes)</summary>
+      <div class="adv-grid">
+        <div class="adv-field">
+          <label data-i18n="redevanceLabel">Redevance fixe HT / abonnement (DA)</label>
+          <input type="number" id="redevance" value="164.16" step="0.01">
+        </div>
+        <div class="adv-field">
+          <label data-i18n="fraisLabel">Frais &amp; prestations HT (DA)</label>
+          <input type="number" id="frais" value="0" step="0.01">
+        </div>
+        <div class="adv-field">
+          <label data-i18n="droitFixeLabel">Droit fixe sur consommation (DA)</label>
+          <input type="number" id="droitFixe" value="100" step="0.01">
+        </div>
+        <div class="adv-field">
+          <label data-i18n="taxeHabitationLabel">Taxe d'habitation (DA)</label>
+          <input type="number" id="taxeHabitation" value="150" step="0.01">
+        </div>
+        <div class="adv-field">
+          <label data-i18n="contributionLabel">Contribution (DA)</label>
+          <input type="number" id="contribution" value="0" step="0.01">
+        </div>
+        <div class="adv-field">
+          <label data-i18n="repeLabel">REPE + RGPE (DA)</label>
+          <input type="number" id="repe" value="0" step="0.01">
+        </div>
+        <div class="adv-field checkbox">
+          <input type="checkbox" id="especes" checked>
+          <label for="especes" data-i18n="especesLabel">Paiement en espèces (droit de timbre ≈ 1%)</label>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="receipt-title" data-i18n="detailTranches">Détail des tranches</div>
+
+    <div class="tranche-block elec">
+      <h3><span class="swatch"></span><span data-i18n="elecBlockTitle">Électricité</span></h3>
+      <table class="tranches" id="elecTable"></table>
+    </div>
+
+    <div class="tranche-block gaz">
+      <h3><span class="swatch"></span><span data-i18n="gazBlockTitle">Gaz</span></h3>
+      <table class="tranches" id="gazTable"></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="receipt-title" data-i18n="recap">Récapitulatif</div>
+    <div class="line-item"><span data-i18n="montantHTLabel">Montant HT (énergie + abonnement)</span><span class="val" id="montantHT">0,00 DA</span></div>
+    <div class="line-item"><span data-i18n="tva9Label">TVA à 9%</span><span class="val" id="tva9">0,00 DA</span></div>
+    <div class="line-item"><span data-i18n="tva19Label">TVA à 19%</span><span class="val" id="tva19">0,00 DA</span></div>
+    <div class="line-item strong"><span data-i18n="tvaTotalLabel">Total TVA</span><span class="val" id="tvaTotal">0,00 DA</span></div>
+    <div class="line-item"><span data-i18n="droitFixeOutLabel">Droit fixe sur consommation</span><span class="val" id="droitFixeOut">0,00 DA</span></div>
+    <div class="line-item"><span data-i18n="taxeOutLabel">Taxe d'habitation</span><span class="val" id="taxeOut">0,00 DA</span></div>
+    <div class="line-item"><span data-i18n="autresOutLabel">Contribution + REPE/RGPE</span><span class="val" id="autresOut">0,00 DA</span></div>
+    <div class="line-item strong"><span data-i18n="netTTCLabel">Net à payer TTC</span><span class="val" id="netTTC">0,00 DA</span></div>
+    <div class="line-item"><span data-i18n="timbreOutLabel">Timbre (paiement espèces)</span><span class="val" id="timbreOut">0,00 DA</span></div>
+
+    <div class="stamp-wrap">
+      <div class="stamp">
+        <div class="sub" data-i18n="totalPayer">Total à payer</div>
+        <div class="amount" id="totalStamp">0,00</div>
+        <div class="cur" data-i18n="currencyName">Dinars Algériens</div>
+      </div>
+      <div class="letters" id="lettersOut"></div>
+    </div>
+  </div>
+
+  <footer data-i18n="footerText">Basé sur le barème CREG (décision D/22-15/CD, en vigueur depuis 2016) · Les frais fixes par défaut suivent l'exemple d'une facture Sonelgaz réelle et sont modifiables ci-dessus.</footer>
+
+</div>
+
+<script>
+const ELEC_TRANCHES = [
+  {max:125, price:1.7787, vat:0.09},
+  {max:250, price:4.1789, vat:0.09},
+  {max:1000, price:4.8120, vat:0.19},
+  {max:Infinity, price:5.4796, vat:0.19}
+];
+const GAZ_TRANCHES = [
+  {max:1125, price:0.1682, vat:0.09},
+  {max:2500, price:0.3245, vat:0.09},
+  {max:7500, price:0.4025, vat:0.19},
+  {max:Infinity, price:0.4599, vat:0.19}
+];
+
+/* -------------------- i18n -------------------- */
+const TRANSLATIONS = {
+  fr: {
+    eyebrow: "Barème CREG en vigueur — tarif 54M / 23M",
+    title: "Simulateur de facture Sonelgaz",
+    description: "Entrez votre consommation trimestrielle d'électricité (kWh) et de gaz (Th). L'appli répartit automatiquement les quantités dans les 4 tranches réglementaires et calcule le montant net à payer, comme sur votre facture.",
+    elecLabel: "Électricité",
+    elecSub: "Consommation du trimestre (index nouveau − index ancien)",
+    gazLabel: "Gaz naturel",
+    gazSub: "Consommation en thermies, convertie via le coefficient PCS",
+    advancedSummary: "Réglages avancés (redevances et taxes fixes)",
+    redevanceLabel: "Redevance fixe HT / abonnement (DA)",
+    fraisLabel: "Frais & prestations HT (DA)",
+    droitFixeLabel: "Droit fixe sur consommation (DA)",
+    taxeHabitationLabel: "Taxe d'habitation (DA)",
+    contributionLabel: "Contribution (DA)",
+    repeLabel: "REPE + RGPE (DA)",
+    especesLabel: "Paiement en espèces (droit de timbre ≈ 1%)",
+    detailTranches: "Détail des tranches",
+    elecBlockTitle: "Électricité",
+    gazBlockTitle: "Gaz",
+    recap: "Récapitulatif",
+    montantHTLabel: "Montant HT (énergie + abonnement)",
+    tva9Label: "TVA à 9%",
+    tva19Label: "TVA à 19%",
+    tvaTotalLabel: "Total TVA",
+    droitFixeOutLabel: "Droit fixe sur consommation",
+    taxeOutLabel: "Taxe d'habitation",
+    autresOutLabel: "Contribution + REPE/RGPE",
+    netTTCLabel: "Net à payer TTC",
+    timbreOutLabel: "Timbre (paiement espèces)",
+    totalPayer: "Total à payer",
+    currencyName: "Dinars Algériens",
+    footerText: "Basé sur le barème CREG (décision D/22-15/CD, en vigueur depuis 2016) · Les frais fixes par défaut suivent l'exemple d'une facture Sonelgaz réelle et sont modifiables ci-dessus.",
+    trancheWord: "Tranche",
+    nonAtteinte: "non atteinte",
+    sousTotalHT: "Sous-total HT",
+    currencySuffix: "DA",
+    lettersTemplate: (words, wordsCent) => `${words} dinar(s) algérien(s) et ${wordsCent} centime(s)`
+  },
+  ar: {
+    eyebrow: "التعريفة السارية لدى CREG — تعريفة 54M / 23M",
+    title: "محاكي فاتورة سونلغاز",
+    description: "أدخل استهلاككم الفصلي من الكهرباء (كيلوواط/ساعة) والغاز (ثيرم). يقوم التطبيق تلقائيًا بتوزيع الكميات على الشرائح التنظيمية الأربع ويحسب المبلغ الصافي الواجب دفعه، تمامًا كما في فاتورتكم.",
+    elecLabel: "الكهرباء",
+    elecSub: "استهلاك الفصل (المؤشر الجديد − المؤشر القديم)",
+    gazLabel: "الغاز الطبيعي",
+    gazSub: "الاستهلاك بالثيرم، محوّل عبر معامل PCS",
+    advancedSummary: "إعدادات متقدمة (الرسوم والضرائب الثابتة)",
+    redevanceLabel: "الاشتراك الثابت دون الرسم (دج)",
+    fraisLabel: "مصاريف وخدمات دون الرسم (دج)",
+    droitFixeLabel: "الحق الثابت على الاستهلاك (دج)",
+    taxeHabitationLabel: "رسم السكن (دج)",
+    contributionLabel: "المساهمة (دج)",
+    repeLabel: "REPE + RGPE (دج)",
+    especesLabel: "الدفع نقدًا (رسم الطابع ≈ 1%)",
+    detailTranches: "تفصيل الشرائح",
+    elecBlockTitle: "الكهرباء",
+    gazBlockTitle: "الغاز",
+    recap: "الملخص",
+    montantHTLabel: "المبلغ دون الرسم (الطاقة + الاشتراك)",
+    tva9Label: "الرسم على القيمة المضافة 9%",
+    tva19Label: "الرسم على القيمة المضافة 19%",
+    tvaTotalLabel: "إجمالي الرسم على القيمة المضافة",
+    droitFixeOutLabel: "الحق الثابت على الاستهلاك",
+    taxeOutLabel: "رسم السكن",
+    autresOutLabel: "المساهمة + REPE/RGPE",
+    netTTCLabel: "الصافي الواجب دفعه شامل الرسوم",
+    timbreOutLabel: "الطابع (الدفع نقدًا)",
+    totalPayer: "المبلغ الإجمالي الواجب دفعه",
+    currencyName: "دينار جزائري",
+    footerText: "استنادًا إلى تعريفة CREG (القرار D/22-15/CD، الساري منذ 2016) · الرسوم الثابتة الافتراضية تتبع نموذج فاتورة سونلغاز حقيقية ويمكن تعديلها أعلاه.",
+    trancheWord: "الشريحة",
+    nonAtteinte: "غير مستهلَكة",
+    sousTotalHT: "المجموع الفرعي دون الرسم",
+    currencySuffix: "دج",
+    lettersTemplate: (words, wordsCent) => `${words} دينار جزائري و${wordsCent} سنتيم`
+  }
+};
+
+let currentLang = 'fr';
+
+function applyLanguage(lang){
+  currentLang = lang;
+  const dict = TRANSLATIONS[lang];
+
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.body.classList.toggle('lang-ar', lang === 'ar');
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) el.textContent = dict[key];
+  });
+
+  document.querySelectorAll('.lang-switch button').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+  });
+
+  calculate();
+}
+
+document.querySelectorAll('.lang-switch button').forEach(btn => {
+  btn.addEventListener('click', () => applyLanguage(btn.getAttribute('data-lang')));
+});
+
+/* -------------------- calculation logic -------------------- */
+function splitTranches(qty, tranches){
+  let remaining = qty;
+  let prevMax = 0;
+  return tranches.map((t, i) => {
+    const width = t.max - prevMax;
+    const used = Math.max(0, Math.min(remaining, width));
+    remaining -= used;
+    prevMax = t.max;
+    return {
+      n: i+1,
+      qty: used,
+      price: t.price,
+      vat: t.vat,
+      montant: used * t.price
+    };
+  });
+}
+
+function fmt(n){
+  return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + TRANSLATIONS[currentLang].currencySuffix;
+}
+function fmtPlain(n){
+  return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function renderTable(el, rows, unit){
+  const dict = TRANSLATIONS[currentLang];
+  let html = '';
+  rows.forEach(r => {
+    if (r.qty > 0){
+      html += `<tr>
+        <td>${dict.trancheWord} ${r.n}</td>
+        <td class="num">${r.qty.toLocaleString('fr-FR')} ${unit}</td>
+        <td class="num">${r.price.toLocaleString('fr-FR',{minimumFractionDigits:4})} ${dict.currencySuffix}</td>
+        <td class="num">${fmt(r.montant)}</td>
+      </tr>`;
+    } else {
+      html += `<tr class="empty"><td colspan="4">${dict.trancheWord} ${r.n} — ${dict.nonAtteinte}</td></tr>`;
+    }
+  });
+  const total = rows.reduce((s,r)=>s+r.montant,0);
+  html += `<tr class="subtotal"><td colspan="3">${dict.sousTotalHT}</td><td class="num">${fmt(total)}</td></tr>`;
+  el.innerHTML = html;
+}
+
+function numberToFrenchWords(num) {
+  // Simple integer-to-French-words for dinar amounts
+  const units = ['','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix',
+    'onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf'];
+  const tens = ['','','vingt','trente','quarante','cinquante','soixante','soixante-dix','quatre-vingt','quatre-vingt-dix'];
+  function chunk(n){
+    if(n===0) return '';
+    if(n<20) return units[n];
+    if(n<100){
+      const t=Math.floor(n/10), u=n%10;
+      if(t===7||t===9){ return tens[t-1] + '-' + units[10+u]; }
+      return tens[t] + (u? '-'+units[u] : '');
+    }
+    if(n<1000){
+      const h=Math.floor(n/100), r=n%100;
+      return (h>1?units[h]+' cent':'cent') + (r? ' '+chunk(r) : (h>1?'s':''));
+    }
+    if(n<1000000){
+      const m=Math.floor(n/1000), r=n%1000;
+      return (m>1? chunk(m)+' mille' : 'mille') + (r? ' '+chunk(r) : '');
+    }
+    return n.toString();
+  }
+  return chunk(num) || 'zéro';
+}
+
+function numberToArabicWords(num) {
+  // Simplified integer-to-Arabic-words for dinar amounts
+  const ones = ['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة',
+    'أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+  const tens = ['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+  const hundreds = {1:'مئة',2:'مئتان',3:'ثلاثمئة',4:'أربعمئة',5:'خمسمئة',6:'ستمئة',7:'سبعمئة',8:'ثمانمئة',9:'تسعمئة'};
+  function chunk(n){
+    if(n===0) return '';
+    if(n<20) return ones[n];
+    if(n<100){
+      const t=Math.floor(n/10), u=n%10;
+      return u? ones[u]+' و'+tens[t] : tens[t];
+    }
+    if(n<1000){
+      const h=Math.floor(n/100), r=n%100;
+      return r? hundreds[h]+' و'+chunk(r) : hundreds[h];
+    }
+    if(n<1000000){
+      const m=Math.floor(n/1000), r=n%1000;
+      let thousandsPart;
+      if(m===1) thousandsPart='ألف';
+      else if(m===2) thousandsPart='ألفان';
+      else if(m>=3 && m<=10) thousandsPart=chunk(m)+' آلاف';
+      else thousandsPart=chunk(m)+' ألف';
+      return r? thousandsPart+' و'+chunk(r) : thousandsPart;
+    }
+    return String(n);
+  }
+  return chunk(num) || 'صفر';
+}
+
+function calculate(){
+  const dict = TRANSLATIONS[currentLang];
+  const elecQty = parseFloat(document.getElementById('elecInput').value) || 0;
+  const gazQty = parseFloat(document.getElementById('gazInput').value) || 0;
+  const redevance = parseFloat(document.getElementById('redevance').value) || 0;
+  const frais = parseFloat(document.getElementById('frais').value) || 0;
+  const droitFixe = parseFloat(document.getElementById('droitFixe').value) || 0;
+  const taxeHabitation = parseFloat(document.getElementById('taxeHabitation').value) || 0;
+  const contribution = parseFloat(document.getElementById('contribution').value) || 0;
+  const repe = parseFloat(document.getElementById('repe').value) || 0;
+  const especes = document.getElementById('especes').checked;
+
+  const elecRows = splitTranches(elecQty, ELEC_TRANCHES);
+  const gazRows = splitTranches(gazQty, GAZ_TRANCHES);
+
+  renderTable(document.getElementById('elecTable'), elecRows, 'kWh');
+  renderTable(document.getElementById('gazTable'), gazRows, 'Th');
+
+  const elecTotal = elecRows.reduce((s,r)=>s+r.montant,0);
+  const gazTotal = gazRows.reduce((s,r)=>s+r.montant,0);
+
+  const base9 = elecRows.filter(r=>r.vat===0.09).reduce((s,r)=>s+r.montant,0)
+              + gazRows.filter(r=>r.vat===0.09).reduce((s,r)=>s+r.montant,0)
+              + redevance + frais;
+  const base19 = elecRows.filter(r=>r.vat===0.19).reduce((s,r)=>s+r.montant,0)
+               + gazRows.filter(r=>r.vat===0.19).reduce((s,r)=>s+r.montant,0);
+
+  const tva9 = base9 * 0.09;
+  const tva19 = base19 * 0.19;
+  const tvaTotal = tva9 + tva19;
+
+  const montantHT = elecTotal + gazTotal + redevance + frais;
+  const autres = contribution + repe;
+  const netTTC = montantHT + tvaTotal + droitFixe + taxeHabitation + autres;
+  const timbre = especes ? Math.round(netTTC * 0.01) : 0;
+  const totalAPayer = netTTC + timbre;
+
+  document.getElementById('montantHT').textContent = fmt(montantHT);
+  document.getElementById('tva9').textContent = fmt(tva9);
+  document.getElementById('tva19').textContent = fmt(tva19);
+  document.getElementById('tvaTotal').textContent = fmt(tvaTotal);
+  document.getElementById('droitFixeOut').textContent = fmt(droitFixe);
+  document.getElementById('taxeOut').textContent = fmt(taxeHabitation);
+  document.getElementById('autresOut').textContent = fmt(autres);
+  document.getElementById('netTTC').textContent = fmt(netTTC);
+  document.getElementById('timbreOut').textContent = fmt(timbre);
+  document.getElementById('totalStamp').textContent = fmtPlain(totalAPayer);
+
+  const intPart = Math.floor(totalAPayer);
+  const centPart = Math.round((totalAPayer - intPart) * 100);
+  const words = currentLang === 'ar' ? numberToArabicWords(intPart) : numberToFrenchWords(intPart);
+  const wordsCent = currentLang === 'ar' ? numberToArabicWords(centPart) : numberToFrenchWords(centPart);
+  document.getElementById('lettersOut').textContent = dict.lettersTemplate(words, wordsCent);
+}
+
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', calculate));
+calculate();
+</script>
+</body>
+</html>
 

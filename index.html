@@ -544,16 +544,16 @@ function splitTranches(qty, tranches){
 
 function fmt(n){
 
-  const value = n.toLocaleString('fr-FR', {
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
-  });
+    const value = n.toLocaleString('fr-FR', {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+    });
 
-  if(currentLang === 'ar'){
-    return TRANSLATIONS[currentLang].currencySuffix + ' ' + value;
-  }
+    if(currentLang === 'ar'){
+        return '\u200Fدج\u00A0\u200E' + value;
+    }
 
-  return value + ' ' + TRANSLATIONS[currentLang].currencySuffix;
+    return value + ' DA';
 }
 function fmtPlain(n){
   return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -567,7 +567,15 @@ function renderTable(el, rows, unit){
       html += `<tr>
         <td>${dict.trancheWord} ${r.n}</td>
         <td class="num">${r.qty.toLocaleString('fr-FR')} ${unit}</td>
-        <td class="num">${r.price.toLocaleString('fr-FR',{minimumFractionDigits:4})} ${dict.currencySuffix}</td>
+        <td class="num">
+${
+currentLang === 'ar'
+?
+'\u200Fدج\u00A0\u200E' + r.price.toLocaleString('fr-FR',{minimumFractionDigits:4})
+:
+r.price.toLocaleString('fr-FR',{minimumFractionDigits:4}) + ' DA'
+}
+</td>
         <td class="num">${fmt(r.montant)}</td>
       </tr>`;
     } else {

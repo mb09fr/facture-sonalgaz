@@ -199,23 +199,7 @@
 
   table.tranches{width:100%;border-collapse:collapse;font-size:13.5px;}
   table.tranches td{padding:5px 4px;border-bottom:1px dotted var(--line);}
-  table.tranches td.num{
-    font-family:'IBM Plex Mono',monospace;
-    text-align:right;
-    white-space:nowrap;
-}
-
-body.lang-ar table.tranches td.num{
-    direction:rtl;
-    unicode-bidi:isolate;
-}
-
-body:not(.lang-ar) table.tranches td.num{
-    direction:ltr;
-}
-  body.lang-ar table.tranches td.num{
-    direction:rtl;
-}
+  table.tranches td.num{font-family:'IBM Plex Mono',monospace;text-align:right;white-space:nowrap;direction:ltr;}
   table.tranches tr.empty td{color:#B9AF97;font-style:italic;}
   table.tranches tr.subtotal td{font-weight:600;border-bottom:none;padding-top:8px;}
 
@@ -223,23 +207,7 @@ body:not(.lang-ar) table.tranches td.num{
     display:flex;justify-content:space-between;align-items:baseline;
     padding:7px 0;border-bottom:1px dotted var(--line);font-size:14px;
   }
-  .line-item .val{
-    font-family:'IBM Plex Mono',monospace;
-    font-weight:500;
-    text-align:right;
-}
-
-body.lang-ar .line-item .val{
-    direction:rtl;
-    unicode-bidi:isolate;
-}
-
-body:not(.lang-ar) .line-item .val{
-    direction:ltr;
-}
-  body.lang-ar .line-item .val{
-    direction:rtl;
-}
+  .line-item .val{font-family:'IBM Plex Mono',monospace;font-weight:500;direction:ltr;text-align:right;}
   .line-item.strong{font-weight:600;font-size:15px;border-bottom:1px solid var(--line);padding-top:10px;}
 
   .stamp-wrap{
@@ -543,17 +511,7 @@ function splitTranches(qty, tranches){
 }
 
 function fmt(n){
-
-    const value = n.toLocaleString('fr-FR', {
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-    });
-
-    if(currentLang === 'ar'){
-        return '\u200Fدج\u00A0\u200E' + value;
-    }
-
-    return value + ' DA';
+  return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + TRANSLATIONS[currentLang].currencySuffix;
 }
 function fmtPlain(n){
   return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -567,15 +525,7 @@ function renderTable(el, rows, unit){
       html += `<tr>
         <td>${dict.trancheWord} ${r.n}</td>
         <td class="num">${r.qty.toLocaleString('fr-FR')} ${unit}</td>
-        <td class="num">
-${
-currentLang === 'ar'
-?
-'\u200Fدج\u00A0\u200E' + r.price.toLocaleString('fr-FR',{minimumFractionDigits:4})
-:
-r.price.toLocaleString('fr-FR',{minimumFractionDigits:4}) + ' DA'
-}
-</td>
+        <td class="num">${r.price.toLocaleString('fr-FR',{minimumFractionDigits:4})} ${dict.currencySuffix}</td>
         <td class="num">${fmt(r.montant)}</td>
       </tr>`;
     } else {
@@ -704,4 +654,3 @@ calculate();
 </script>
 </body>
 </html>
-

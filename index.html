@@ -210,6 +210,11 @@
   .line-item .val{font-family:'IBM Plex Mono',monospace;font-weight:500;direction:ltr;text-align:right;}
   .line-item.strong{font-weight:600;font-size:15px;border-bottom:1px solid var(--line);padding-top:10px;}
 
+  /* Currency + amount pairing: order is controlled explicitly via DOM order
+     and a fixed-direction flex box, never via bidi text reordering. */
+  .cur-line{display:inline-flex;direction:ltr;align-items:baseline;gap:4px;}
+  .cur-line .amt,.cur-line .cur{unicode-bidi:isolate;}
+
   .stamp-wrap{
     display:flex;align-items:center;justify-content:center;flex-direction:column;
     padding:30px 20px 10px;
@@ -510,8 +515,16 @@ function splitTranches(qty, tranches){
   });
 }
 
+function fmtCurrencyParts(numStr){
+  const suffix = TRANSLATIONS[currentLang].currencySuffix;
+  const numSpan = `<span class="amt" dir="ltr">${numStr}</span>`;
+  const curSpan = `<span class="cur" dir="${currentLang === 'ar' ? 'rtl' : 'ltr'}">${suffix}</span>`;
+  return currentLang === 'ar'
+    ? `<span class="cur-line">${curSpan}${numSpan}</span>`
+    : `<span class="cur-line">${numSpan}${curSpan}</span>`;
+}
 function fmt(n){
-  return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' ' + TRANSLATIONS[currentLang].currencySuffix;
+  return fmtCurrencyParts(n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}));
 }
 function fmtPlain(n){
   return n.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -525,7 +538,7 @@ function renderTable(el, rows, unit){
       html += `<tr>
         <td>${dict.trancheWord} ${r.n}</td>
         <td class="num">${r.qty.toLocaleString('fr-FR')} ${unit}</td>
-        <td class="num">${r.price.toLocaleString('fr-FR',{minimumFractionDigits:4})} ${dict.currencySuffix}</td>
+        <td class="num">${fmtCurrencyParts(r.price.toLocaleString('fr-FR',{minimumFractionDigits:4}))}</td>
         <td class="num">${fmt(r.montant)}</td>
       </tr>`;
     } else {
@@ -631,15 +644,15 @@ function calculate(){
   const timbre = especes ? Math.round(netTTC * 0.01) : 0;
   const totalAPayer = netTTC + timbre;
 
-  document.getElementById('montantHT').textContent = fmt(montantHT);
-  document.getElementById('tva9').textContent = fmt(tva9);
-  document.getElementById('tva19').textContent = fmt(tva19);
-  document.getElementById('tvaTotal').textContent = fmt(tvaTotal);
-  document.getElementById('droitFixeOut').textContent = fmt(droitFixe);
-  document.getElementById('taxeOut').textContent = fmt(taxeHabitation);
-  document.getElementById('autresOut').textContent = fmt(autres);
-  document.getElementById('netTTC').textContent = fmt(netTTC);
-  document.getElementById('timbreOut').textContent = fmt(timbre);
+  document.getElementById('montantHT').innerHTML = fmt(montantHT);
+  document.getElementById('tva9').innerHTML = fmt(tva9);
+  document.getElementById('tva19').innerHTML = fmt(tva19);
+  document.getElementById('tvaTotal').innerHTML = fmt(tvaTotal);
+  document.getElementById('droitFixeOut').innerHTML = fmt(droitFixe);
+  document.getElementById('taxeOut').innerHTML = fmt(taxeHabitation);
+  document.getElementById('autresOut').innerHTML = fmt(autres);
+  document.getElementById('netTTC').innerHTML = fmt(netTTC);
+  document.getElementById('timbreOut').innerHTML = fmt(timbre);
   document.getElementById('totalStamp').textContent = fmtPlain(totalAPayer);
 
   const intPart = Math.floor(totalAPayer);
